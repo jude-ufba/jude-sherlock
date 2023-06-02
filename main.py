@@ -1,4 +1,6 @@
 import os
+import base64
+import tempfile
 import json
 from subprocess import check_output
 from flask import (
@@ -23,28 +25,24 @@ dictConfig({
 })
 app = Flask(__name__)
 
-
 @app.route('/', methods=['POST'])
 def main():
     try:
-        # Remove previous files
-        os.system('rm submissions/*.*')
-
         extension = request.json.get('extension')
-        submission1 = request.json.get('submission1')
-        submission2 = request.json.get('submission2')
+        submissions = request.json.get('submissions', [])
 
-        with open(f'submissions/submission1.{extension}', 'wb') as file:
-            file.write(submission1.encode())
+        with tempfile.TemporaryDirectory() as submissions_folder:
+            for submission in submissions:
+                path: str = f"{submissions_folder}/{submission['id']}.{extension}"
 
-        with open(f'submissions/submission2.{extension}', 'wb') as file:
-            file.write(submission2.encode())
+                with open(path, "wb") as file:
+                    file.write(base64.b64decode(submission['code']))
 
-        command = ['./sherlock', '-e', extension, 'submissions']
-        response = check_output(command).decode('utf-8')
+            command = ['./sherlock', '-e', extension, submissions_folder]
+            response = check_output(command).decode('utf-8')
 
         return Response(
-            json.dumps({'resposta': response}),
+            json.dumps({'result': response.split('\n')[:-1]}),
             status=200,
             mimetype='application/json',
         )
