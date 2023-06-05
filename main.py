@@ -42,7 +42,7 @@ def main():
             response = check_output(command).decode('utf-8')
 
         return Response(
-            json.dumps({'result': response.split('\n')[:-1]}),
+            json.dumps({'result': response}),
             status=200,
             mimetype='application/json',
         )
