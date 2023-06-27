@@ -38,7 +38,7 @@ def main():
                 with open(path, "wb") as file:
                     file.write(base64.b64decode(submission['code']))
 
-            command = ['./sherlock', '-e', extension, submissions_folder]
+            command = ['./sherlock', '-z', '1', '-e', extension, submissions_folder]
             response = check_output(command).decode('utf-8')
 
         return Response(
