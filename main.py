@@ -25,6 +25,25 @@ dictConfig({
 })
 app = Flask(__name__)
 
+def extract_ids_and_result(result):
+    """Extract ids and result from a result"""
+    path1, path2, res = result.split(";")
+    id1 = path1.split("/")[-1].split(".")[0]
+    id2 = path2.split("/")[-1].split(".")[0]
+    return id1, id2, int(res.replace("%", ""))
+
+def extract_result(output_sherlock):
+    results = []
+    for res in output_sherlock.split("\n")[:-1]:
+        id1, id2, res = extract_ids_and_result(res)
+        results.append({
+            "id1": id1,
+            "id2": id2,
+            "similarity": res
+        })
+
+    return results
+
 @app.route('/', methods=['POST'])
 def main():
     try:
@@ -39,10 +58,11 @@ def main():
                     file.write(base64.b64decode(submission['code']))
 
             command = ['./sherlock', '-z', '1', '-e', extension, submissions_folder]
-            response = check_output(command).decode('utf-8')
+            response_sherlock = check_output(command).decode('utf-8')
+            response = extract_result(response_sherlock)
 
         return Response(
-            json.dumps({'result': response}),
+            json.dumps({'results': response}),
             status=200,
             mimetype='application/json',
         )
